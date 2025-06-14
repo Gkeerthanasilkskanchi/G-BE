@@ -1,10 +1,13 @@
 
-import { log } from 'console';
 import { google } from 'googleapis';
-import path from 'path';
+import dotenv from "dotenv";
+
+dotenv.config(); 
+
+const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS || '{}');
 
 const auth = new google.auth.GoogleAuth({
-  keyFile: path.join(__dirname, '../credentials/service-account.json'),
+  credentials,
   scopes: ['https://www.googleapis.com/auth/spreadsheets'],
 });
 
@@ -13,7 +16,7 @@ export const getSheetsClient = () => {
 };
 
 export const sheets =getSheetsClient();
-export const SPREADSHEET_ID = '1Hp8V7vr_Z0eXC3GqVShzBV7526S_iPvbxdF5MWLU2Vs';
+export const SPREADSHEET_ID = process.env.GOOGLE_SPREADSHEET_ID
 
 
 
