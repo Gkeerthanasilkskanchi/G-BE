@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { addProduct, createOrder, editProduct, getAllProducts, getAllProductsWithFlags, getFilteredProductFromDB, getProductById, getUserByEmail, updateProductStatus } from "../repository/contactRepo"; // or productRepo.ts
+import { addProduct, createOrder, editProduct, getAllProductsWithFlags, getFilteredProductFromDB, getProductById, getUserByEmail, updateProductStatus } from "../repository/contactRepo"; // or productRepo.ts
 import { likeProduct, getLikedProductsByUser, addToCart, getCartByUser, getUserIdByEmail } from "../repository/contactRepo";
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
@@ -28,15 +28,13 @@ export const createProduct = async (req: any, res: Response, next: NextFunction)
 export const fetchProducts = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const userId: string = req.params?.email;
-
     let user: any = null;
     if (userId != null) {
       user = await getUserByEmail(userId);
     }
 
-    const products: any = await getAllProductsWithFlags(user || null); // ✅ await here
-    console.log(products);
-    
+    const products: any = await getAllProductsWithFlags(user || null);
+
 
     const modifiedProducts = products.map((product: any) => ({
       ...product,
@@ -67,7 +65,6 @@ export const likeProductService = async (req: Request, res: Response, next: Next
     res.status(200).json({ message: message });
 
   } catch (err) {
-    console.error("likeProductService Error:", err); // Add logging for debugging
     res.status(500).json({ message: "Internal server error" }); // send JSON error
   }
 };
@@ -78,16 +75,7 @@ export const getLikedProducts = async (req: Request, res: Response, next: NextFu
   const email: any = req.params.userId;
   try {
     const userId: any = await getUserIdByEmail(email); // ✅ Add await
-    console.log("user_id : ");
-    
-    console.log(userId);
-    
-
     const products = await getLikedProductsByUser(userId);
-    
-    console.log("products : ");
-
-    console.log(products);
     
     const modifiedProducts = products.map((product: any) => {
       return {
@@ -109,10 +97,6 @@ export const addToCartService = async (req: Request, res: Response, next: NextFu
   try {
     const userId: any = await getUserIdByEmail(email); // ✅ Add 'await'
 
-        console.log("userId");
-
-    console.log(userId);
-    
     const { message } = await addToCart(userId, productId, quantity || 1);
     res.status(200).json({ message: message });
   } catch (err) {
@@ -275,7 +259,6 @@ export const getFilteredProduct = async (req: Request, res: Response, next: Next
     const keyword: string = req.query.keyword?.toString() || "";
 
     const productData = await getFilteredProductFromDB(page, keyword);
-    console.log(productData);
     
     res.status(200).json({ data: productData });
   } catch (err) {
