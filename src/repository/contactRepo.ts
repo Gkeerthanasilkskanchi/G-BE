@@ -294,7 +294,7 @@ export const getCartByUser = async (userId: number): Promise<any[]> => {
   // Products
   const productRes = await sheetsClient.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
-    range: 'products!A2:M',
+    range: 'products!A2:L',
   });
   const products = productRes.data.values || [];
 
@@ -408,17 +408,17 @@ export const editProduct = async (
 
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
-    range: 'products!A2:M', // Includes ID column (A) to modified_at (M)
+    range: 'products!A2:L', // Includes ID column (A) to modified_at (M)
   });
 
   const rows = res.data.values || [];
-
-  const rowIndex = rows.findIndex(row => parseInt(row[0]) === id); // Column A = ID
+  
+  const rowIndex = rows.findIndex(row => row[0] === id); 
 
   if (rowIndex !== -1) {
     const existing = rows[rowIndex];
     const updatedRow = [
-      id.toString(), // Column A: ID
+      id.toString(), 
       image, title, price.toString(), about, cloth, category,
       bought_by, saree_type,
       existing[9] || '',        // created_at
@@ -426,7 +426,7 @@ export const editProduct = async (
       existing[11] || '1',      // is_active
     ];
 
-    const range = `products!A${rowIndex + 2}:M${rowIndex + 2}`; // +2 to offset header
+    const range = `products!A${rowIndex + 2}:L${rowIndex + 2}`; // +2 to offset header
     await sheets.spreadsheets.values.update({
       spreadsheetId: SPREADSHEET_ID,
       range,
