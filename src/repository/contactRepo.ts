@@ -2,7 +2,7 @@
 import { google } from 'googleapis';
 import dotenv from "dotenv";
 
-dotenv.config(); 
+dotenv.config();
 
 const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS || '{}');
 
@@ -15,7 +15,7 @@ export const getSheetsClient = () => {
   return google.sheets({ version: 'v4', auth });
 };
 
-export const sheets =getSheetsClient();
+export const sheets = getSheetsClient();
 export const SPREADSHEET_ID = process.env.GOOGLE_SPREADSHEET_ID
 
 
@@ -65,7 +65,7 @@ export const getUserList = async (): Promise<any[]> => {
 
 export const getUserByEmail = async (email: string): Promise<any | null> => {
   const users = await getUserList();
-  const user = users.find(u => u.email === email);
+  const user = users.find(u => u.email == email);
   return user || null;
 };
 
@@ -81,7 +81,7 @@ export const addProduct = async (
   saree_type: string,
   created_by: string
 ): Promise<void> => {
-  const sheets = getSheetsClient();
+  const sheets = await getSheetsClient();
 
   const created_at = new Date().toISOString();
   const is_active = 1;
@@ -126,7 +126,7 @@ export const addProduct = async (
 };
 
 export const likeProduct = async (userId: number, productId: number): Promise<{ message: string }> => {
-  const sheetsClient = getSheetsClient();
+  const sheetsClient = await getSheetsClient();
 
   // Fetch all likes including ID
   const res = await sheetsClient.spreadsheets.values.get({
@@ -136,9 +136,9 @@ export const likeProduct = async (userId: number, productId: number): Promise<{ 
 
   const likes = res.data.values || [];
 
-  const index = likes.findIndex(([, uId, pId]) => parseInt(uId) === userId && parseInt(pId) === productId);
+  const index = likes.findIndex(([, uId, pId]) => parseInt(uId) == userId && parseInt(pId) == productId);
 
-  if (index === -1) {
+  if (index == -1) {
     // Auto-generate new ID
     const existingIds = likes.map(row => parseInt(row[0])).filter(id => !isNaN(id));
     const maxId = existingIds.length > 0 ? Math.max(...existingIds) : 0;
@@ -162,7 +162,7 @@ export const likeProduct = async (userId: number, productId: number): Promise<{ 
 };
 
 export const updateProductStatus = async (productId: number, isActive: boolean): Promise<void> => {
-  const sheetsClient = getSheetsClient();
+  const sheetsClient = await getSheetsClient();
 
   // Fetch full data including ID
   const res = await sheetsClient.spreadsheets.values.get({
@@ -173,7 +173,7 @@ export const updateProductStatus = async (productId: number, isActive: boolean):
   const products = res.data.values || [];
 
   // Find row by matching ID in column A
-  const rowIndex = products.findIndex(([id]) => parseInt(id) === productId);
+  const rowIndex = products.findIndex(([id]) => parseInt(id) == productId);
 
   if (rowIndex >= 0) {
     const updatedRow = products[rowIndex];
@@ -191,7 +191,7 @@ export const updateProductStatus = async (productId: number, isActive: boolean):
 };
 
 export const getLikedProductsByUser = async (userId: number): Promise<any[]> => {
-  const sheetsClient = getSheetsClient();
+  const sheetsClient = await getSheetsClient();
 
   // Fetch all products
   const productRes = await sheetsClient.spreadsheets.values.get({
@@ -206,7 +206,7 @@ export const getLikedProductsByUser = async (userId: number): Promise<any[]> => 
     range: 'liked_products!A2:C',
   });
 
-  const liked = (likesRes.data.values || []).filter(([, uId]) => parseInt(uId.trim()) === userId);
+  const liked = (likesRes.data.values || []).filter(([, uId]) => parseInt(uId.trim()) == userId);
   const likedProductIds = new Set(liked.map(([_, __, productId]) => parseInt(productId)));
 
   // Fetch cart products
@@ -214,7 +214,7 @@ export const getLikedProductsByUser = async (userId: number): Promise<any[]> => 
     spreadsheetId: SPREADSHEET_ID,
     range: 'cart_products!A2:D',
   });
-  const cart = (cartRes.data.values || []).filter(([, uId]) => parseInt(uId.trim()) === userId);
+  const cart = (cartRes.data.values || []).filter(([, uId]) => parseInt(uId.trim()) == userId);
   const cartProductIds = new Set(cart.map(([_, __, productId]) => parseInt(productId)));
 
   return products.map((row) => {
@@ -225,7 +225,7 @@ export const getLikedProductsByUser = async (userId: number): Promise<any[]> => 
 
     const productId = parseInt(productIdStr);
 
-    if (parseInt(is_active) !== 1 || !likedProductIds.has(productId)) return null;
+    if (parseInt(is_active) != 1 || !likedProductIds.has(productId)) return null;
 
     return {
       id: productId,
@@ -250,7 +250,7 @@ export const addToCart = async (
   productId: number,
   quantity: number
 ): Promise<{ message: string }> => {
-  const sheetsClient = getSheetsClient();
+  const sheetsClient = await getSheetsClient();
 
   const res = await sheetsClient.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
@@ -260,10 +260,10 @@ export const addToCart = async (
   const cartItems = res.data.values || [];
 
   const index = cartItems.findIndex(([, uid, pid]) =>
-    parseInt(uid) === userId && parseInt(pid) === productId
+    parseInt(uid) == userId && parseInt(pid) == productId
   );
 
-  if (index === -1) {
+  if (index == -1) {
     // Auto-generate ID
     const existingIds = cartItems.map(([id]) => parseInt(id)).filter(id => !isNaN(id));
     const newId = existingIds.length > 0 ? Math.max(...existingIds) + 1 : 1;
@@ -289,58 +289,88 @@ export const addToCart = async (
 };
 
 export const getCartByUser = async (userId: number): Promise<any[]> => {
-  const sheetsClient = getSheetsClient();
+  const sheetsClient = await getSheetsClient();
 
-  // Products
+  // Fetch all products
   const productRes = await sheetsClient.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
     range: 'products!A2:L',
   });
   const products = productRes.data.values || [];
 
-  // Cart Items
+  // Fetch cart items
   const cartRes = await sheetsClient.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
     range: 'cart_products!A2:D',
   });
-  const cart = (cartRes.data.values || []).filter(([_, uid]) => parseInt(uid) === userId);
-  const cartMap = new Map(cart.map(([_, __, pid, qty]) => [parseInt(pid), parseInt(qty)]));
 
-  // Liked Items
+  const cart = (cartRes.data.values || []).filter(([, uId]) =>
+    parseInt(uId.trim()) === userId
+  );
+
+  // ✅ Map productId -> quantity
+  const cartMap = new Map(
+    cart.map(([_, __, productId, quantity]) => [
+      parseInt(productId.trim()),
+      parseInt(quantity.trim()),
+    ])
+  );
+
+  // Fetch liked products
   const likedRes = await sheetsClient.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
     range: 'liked_products!A2:C',
   });
-  const liked = (likedRes.data.values || []).filter(([_, uid]) => parseInt(uid) === userId);
-  const likedSet = new Set(liked.map(([_, __, pid]) => parseInt(pid)));
 
-  return products.map((row) => {
-    const [
-      id, image, title, price, about, cloth, category,
-      bought_by, saree_type, created_at, created_by, is_active
-    ] = row;
+  const liked = (likedRes.data.values || []).filter(([, uid]) =>
+    parseInt(uid.trim()) === userId
+  );
+  const likedSet = new Set(
+    liked.map(([_, __, pid]) => parseInt(pid.trim()))
+  );
 
-    const productId = parseInt(id);
-    if (parseInt(is_active) !== 1 || !cartMap.has(productId)) return null;
+  // Construct final product list
+  return products
+    .map((row) => {
+      const [
+        id,
+        image,
+        title,
+        price,
+        about,
+        cloth,
+        category,
+        bought_by,
+        saree_type,
+        created_at,
+        created_by,
+        is_active,
+      ] = row;
 
-    return {
-      id: productId,
-      image,
-      title,
-      price: parseFloat(price),
-      about,
-      cloth,
-      category,
-      bought_by,
-      saree_type,
-      created_at,
-      created_by,
-      is_product_in_cart: true,
-      is_product_liked: likedSet.has(productId),
-      quantity: cartMap.get(productId),
-    };
-  }).filter(Boolean);
+      const productId = parseInt(id.trim());
+
+      if (parseInt(is_active) !== 1 || !cartMap.has(productId)) return null;
+
+      return {
+        id: productId,
+        image,
+        title,
+        price: parseFloat(price),
+        about,
+        cloth,
+        category,
+        bought_by,
+        saree_type,
+        created_at,
+        created_by,
+        is_product_in_cart: true,
+        is_product_liked: likedSet.has(productId),
+        quantity: cartMap.get(productId), // ✅ now gives actual quantity
+      };
+    })
+    .filter(Boolean);
 };
+
 
 
 export const getUserIdByEmail = async (email: string): Promise<number | null> => {
@@ -356,7 +386,7 @@ export const getUserIdByEmail = async (email: string): Promise<number | null> =>
 
     if (
       userEmail &&
-      userEmail.trim().toLowerCase() === email.trim().toLowerCase()
+      userEmail.trim().toLowerCase() == email.trim().toLowerCase()
     ) {
       return parseInt(id);
     }
@@ -372,7 +402,7 @@ export const createOrder = async (
   quantity: number,
   price: number
 ): Promise<void> => {
-  const sheetsClient = getSheetsClient();
+  const sheetsClient = await getSheetsClient();
 
   const res = await sheetsClient.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
@@ -412,13 +442,13 @@ export const editProduct = async (
   });
 
   const rows = res.data.values || [];
-  
-  const rowIndex = rows.findIndex(row => row[0] === id); 
+
+  const rowIndex = rows.findIndex(row => row[0] == id);
 
   if (rowIndex !== -1) {
     const existing = rows[rowIndex];
     const updatedRow = [
-      id.toString(), 
+      id.toString(),
       image, title, price.toString(), about, cloth, category,
       bought_by, saree_type,
       existing[9] || '',        // created_at
@@ -462,14 +492,14 @@ export const getFilteredProductFromDB = async (
       );
       return data;
     })
-    .filter(p => p.is_active === '1');
+    .filter(p => p.is_active == '1');
 
   const filtered = keyword.trim()
     ? products.filter(p =>
-        [p.title, p.category, p.saree_type].some(field =>
-          field?.toLowerCase().includes(keyword.toLowerCase())
-        )
+      [p.title, p.category, p.saree_type].some(field =>
+        field?.toLowerCase().includes(keyword.toLowerCase())
       )
+    )
     : products;
 
   const offset = (page - 1) * pageSize;
@@ -481,83 +511,65 @@ export const getFilteredProductFromDB = async (
   };
 };
 
-
-
-export const getProductById = async (id: number): Promise<any | null> => {
-  const res = await sheets.spreadsheets.values.get({
-    spreadsheetId: SPREADSHEET_ID,
-    range: 'products!A2:M',
-  });
-
-  const rows = res.data.values || [];
-
-  const headers = [
-    'id', 'image', 'title', 'price', 'about', 'cloth',
-    'category', 'bought_by', 'saree_type',
-    'created_at', 'created_by', 'is_active'
-  ];
-
-  const row = rows.find(row => parseInt(row[0]) === id);
-
-  if (!row || row[11] !== '1') return null;
-
-  const product: any = Object.fromEntries(
-    headers.map((key, idx) => [key, row[idx] || ''])
-  );
-
-  return product;
-};
-
 export const getAllProductsWithFlags = async (user: { id: number }) => {
-  // Products
-  const productRes = await sheets.spreadsheets.values.get({
+  const sheetsClient = await getSheetsClient();
+
+  // Fetch products
+  const productRes = await sheetsClient.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
     range: 'products!A2:L',
   });
 
-  const products = (productRes.data.values || []).map((row) => ({
-    id: row[0],
-    image: row[1],
-    title: row[2],
-    price: row[3],
-    about: row[4],
-    cloth: row[5],
-    category: row[6],
-    bought_by: row[7],
-    saree_type: row[8],
-    created_at: row[9],
-    created_by: row[10],
-    is_active: row[11],
-  })).filter(p => p.is_active === '1');
+  const products = (productRes.data.values || [])
+    .map((row) => ({
+      id: row[0]?.trim(),
+      image: row[1],
+      title: row[2],
+      price: row[3],
+      about: row[4],
+      cloth: row[5],
+      category: row[6],
+      bought_by: row[7],
+      saree_type: row[8],
+      created_at: row[9],
+      created_by: row[10],
+      is_active: row[11],
+    }))
+    .filter((p) => p.is_active?.trim() === '1');
 
-  // Liked products
-  const likedRes = await sheets.spreadsheets.values.get({
+  // Fetch liked products
+  const likedRes = await sheetsClient.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
     range: 'liked_products!A2:C',
   });
 
-  const likedIds = new Set(
+  const likedProductIds = new Set(
     (likedRes.data.values || [])
-      .filter(row => parseInt(row[0]) === user.id)
-      .map(row => row[1].trim())
+      .filter(([, uid]) => parseInt(uid?.trim()) === user.id)
+      .map(([, __, pid]) => pid?.trim())
   );
 
-  // Cart products
-  const cartRes = await sheets.spreadsheets.values.get({
+  // Fetch cart products
+  const cartRes = await sheetsClient.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
     range: 'cart_products!A2:D',
   });
 
-  const cartIds = new Set(
+  const cartProductIds = new Set(
     (cartRes.data.values || [])
-      .filter(row => parseInt(row[0]) === user.id)
-      .map(row => row[1].trim())
+      .filter(([, uid]) => parseInt(uid?.trim()) === user.id)
+      .map(([, __, pid]) => pid?.trim())
   );
 
-  return products.map(product => ({
-    ...product,
-    is_product_liked: likedIds.has(product.image?.trim()),
-    is_product_in_cart: cartIds.has(product.image?.trim()),
-  }));
+  // Build final product list with flags
+  return products.map((product) => {
+    const productIdStr = product.id;
+    return {
+      ...product,
+      is_product_liked: likedProductIds.has(productIdStr),
+      is_product_in_cart: cartProductIds.has(productIdStr),
+    };
+  });
 };
+
 
