@@ -305,8 +305,9 @@ export const getCartByUser = async (userId: number): Promise<any[]> => {
   });
 
   const cart = (cartRes.data.values || []).filter(([, uId]) =>
-    parseInt(uId.trim()) === userId
+    parseInt(uId.trim()) == userId
   );
+  console.log(cart)
 
   // ✅ Map productId -> quantity
   const cartMap = new Map(
@@ -315,7 +316,7 @@ export const getCartByUser = async (userId: number): Promise<any[]> => {
       parseInt(quantity.trim()),
     ])
   );
-
+  console.log(cartMap)
   // Fetch liked products
   const likedRes = await sheetsClient.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
@@ -323,7 +324,7 @@ export const getCartByUser = async (userId: number): Promise<any[]> => {
   });
 
   const liked = (likedRes.data.values || []).filter(([, uid]) =>
-    parseInt(uid.trim()) === userId
+    parseInt(uid.trim()) == userId
   );
   const likedSet = new Set(
     liked.map(([_, __, pid]) => parseInt(pid.trim()))
@@ -509,6 +510,31 @@ export const getFilteredProductFromDB = async (
     products: paginated,
     total: filtered.length,
   };
+};
+
+export const getProductById = async (id: number): Promise<any | null> => {
+  const res = await sheets.spreadsheets.values.get({
+    spreadsheetId: SPREADSHEET_ID,
+    range: 'products!A2:M',
+  });
+
+  const rows = res.data.values || [];
+
+  const headers = [
+    'id', 'image', 'title', 'price', 'about', 'cloth',
+    'category', 'bought_by', 'saree_type',
+    'created_at', 'created_by', 'is_active'
+  ];
+
+  const row = rows.find(row => parseInt(row[0]) === id);
+
+  if (!row || row[11] !== '1') return null;
+
+  const product: any = Object.fromEntries(
+    headers.map((key, idx) => [key, row[idx] || ''])
+  );
+
+  return product;
 };
 
 export const getAllProductsWithFlags = async (user: { id: number }) => {
