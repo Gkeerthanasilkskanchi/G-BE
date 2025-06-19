@@ -27,10 +27,9 @@ export const createProduct = async (req: any, res: Response, next: NextFunction)
 
 export const fetchProducts = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const userId: string = req.params?.email;
     let user: any = null;
-    if (userId != null) {
-      user = await getUserByEmail(userId);
+    if (req.params?.email != "null") {
+      user = await getUserByEmail(req.params?.email);
     }
 
     const products: any = await getAllProductsWithFlags(user || null);
@@ -108,7 +107,7 @@ export const addToCartService = async (req: Request, res: Response, next: NextFu
 export const getCart = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   const email: any = req.params.userId;
   try {
-    const userId: any = getUserIdByEmail(email);
+    const userId: any =await getUserIdByEmail(email);
     const cart = await getCartByUser(userId);
     const modifiedProducts = cart.map((product: any) => {
       return {
@@ -263,8 +262,7 @@ export const getFilteredProduct = async (req: Request, res: Response, next: Next
     res.status(200).json({ data: productData });
   } catch (err) {
     if (err instanceof Error) {
-      // Type-safe access to message
-      console.error("Error:", err.message);
+    
       res.status(500).json({ error: err.message });
     } else {
       // Fallback for unknown types
