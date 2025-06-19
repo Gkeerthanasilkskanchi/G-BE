@@ -2,10 +2,10 @@
   "name": "be",
   "version": "1.0.0",
   "main": "src/index.ts",
- "scripts": {
-  "start": "nodemon src/index.ts",
-  "dev": "nodemon src/index.ts",
-  "build": "tsc"
+"scripts": {
+  "dev": "ts-node src/index.ts",
+  "build": "tsc",
+  "start": "node dist/index.js"
 },
   "keywords": [],
   "author": "",
