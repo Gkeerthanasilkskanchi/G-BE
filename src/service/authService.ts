@@ -11,9 +11,9 @@ export const registerUser = async (req: Request, res: Response, next: NextFuncti
     if (existingUser) {
       return res.status(400).json({ message: "User already exists" });
     }
-    console.log("test",existingUser)
+ 
     const hashedPassword = await bcrypt.hash(password, 10);
-    await createUser(email, hashedPassword,'admin',userName);
+    await createUser(email, hashedPassword,'user',userName);
  
     res.status(201).json({ message: "User registered successfully" });
   } catch (error) {
