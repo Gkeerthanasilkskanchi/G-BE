@@ -1,6 +1,6 @@
 import express from "express";
 import { registerUser, loginUser, getUser } from "../service/authService";
-import { addOrder, addToCartService, createProduct, deleteProduct, fetchProductById, fetchProducts, getCart, getFilteredProduct, getLikedProducts, likeProductService, sendQuery, updateProduct } from "../service/productService";
+import { addOrder, addToCartService, createProduct, deleteProduct, fetchProductById, getAllCategoriesProducts,fetchProducts, getCart, getFilteredProduct,getAllCategories, getLikedProducts, likeProductService, sendQuery, updateProduct } from "../service/productService";
 import { createOrder, editProduct } from "../repository/contactRepo";
 import { upload } from "./middleware";
 
@@ -27,4 +27,7 @@ router.get('/deleteProduct/:id',deleteProduct);
 router.get('/getProductById/:id',fetchProductById);
 router.post('/editProduct',upload.single('image'),updateProduct);
 router.get('/getFilteredProduct', getFilteredProduct);
+router.get('/getCategory', getAllCategories);
+router.get('/getCategoryProduct', getAllCategoriesProducts);
+
 export { router as userRoutes };

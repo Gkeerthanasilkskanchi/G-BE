@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { addProduct, createOrder, editProduct, getAllProductsWithFlags, getFilteredProductFromDB, getProductById, getUserByEmail, updateProductStatus } from "../repository/contactRepo"; // or productRepo.ts
+import { addProduct, createOrder, editProduct, getAllProductsWithFlags, getFilteredProductFromDB,getProductsByCategoryFromDB, getProductById,getUniqueProductCategoriesFromDB, getUserByEmail, updateProductStatus } from "../repository/contactRepo"; // or productRepo.ts
 import { likeProduct, getLikedProductsByUser, addToCart, getCartByUser, getUserIdByEmail } from "../repository/contactRepo";
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
@@ -291,3 +291,35 @@ export const fetchProductById = async (req: Request, res: Response, next: NextFu
   }
 };
 
+export const getAllCategories = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+  try {
+    const categories = await getUniqueProductCategoriesFromDB();
+    res.status(200).json({ data: categories });
+  } catch (err) {
+    if (err instanceof Error) {
+      res.status(500).json({ error: err.message });
+    } else {
+      res.status(500).json({ error: "An unknown error occurred." });
+    }
+  }
+};
+
+
+
+export const getAllCategoriesProducts = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const category: string = (req.body.category as string)?.trim() || "";
+
+    if (!category) {
+      res.status(400).json({ message: "Category is required" });
+      return;
+    }
+
+    const products = await getProductsByCategoryFromDB(category);
+
+    res.status(200).json({ data: products });
+  } catch (error) {
+    console.error("Error fetching category products:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
