@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { addProduct, createOrder, editProduct, getAllProductsWithFlags, getFilteredProductFromDB,getProductsByCategoryFromDB, getProductById,getUniqueProductCategoriesFromDB, getUserByEmail, updateProductStatus } from "../repository/contactRepo"; // or productRepo.ts
+import { addProduct, createOrder, editProduct, getAllProductsWithFlags, getFilteredProductFromDB, getProductById,getProductsByCategoryWithFlags,getUniqueProductCategoriesFromDB, getUserByEmail, updateProductStatus } from "../repository/contactRepo"; // or productRepo.ts
 import { likeProduct, getLikedProductsByUser, addToCart, getCartByUser, getUserIdByEmail } from "../repository/contactRepo";
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
@@ -308,14 +308,22 @@ export const getAllCategories = async (req: Request, res: Response, next: NextFu
 
 export const getAllCategoriesProducts = async (req: Request, res: Response): Promise<void> => {
   try {
-    const category: string = (req.body.category as string)?.trim() || "";
+    console.log(req.params)
+   const { id , email }:any = req.params;
+    const userId: any =await getUserIdByEmail(email);
 
-    if (!category) {
+    if (!id) {
       res.status(400).json({ message: "Category is required" });
       return;
     }
-
-    const products = await getProductsByCategoryFromDB(category);
+     let products=null;
+    if(id == "all"){
+      
+       products =  await getAllProductsWithFlags(userId);
+      
+    }else{
+     products = await getProductsByCategoryWithFlags(id,userId);
+    }
 
     res.status(200).json({ data: products });
   } catch (error) {

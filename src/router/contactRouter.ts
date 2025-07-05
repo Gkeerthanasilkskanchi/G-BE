@@ -28,6 +28,6 @@ router.get('/getProductById/:id',fetchProductById);
 router.post('/editProduct',upload.single('image'),updateProduct);
 router.get('/getFilteredProduct', getFilteredProduct);
 router.get('/getCategory', getAllCategories);
-router.get('/getCategoryProduct', getAllCategoriesProducts);
+router.get('/getCategoryProduct/:id/:email', getAllCategoriesProducts);
 
 export { router as userRoutes };

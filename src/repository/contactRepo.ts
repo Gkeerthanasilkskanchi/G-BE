@@ -711,8 +711,14 @@ export const getUniqueProductCategoriesFromDB = async (): Promise<
   return uniqueCategoriesWithImages;
 };
 
-export const getProductsByCategoryFromDB = async (category: string): Promise<any[]> => {
-  const response: any = await sheets.spreadsheets.values.get({
+export const getProductsByCategoryWithFlags = async (
+  category: string,
+  user: { id: number }
+): Promise<any[]> => {
+  const sheetsClient = await getSheetsClient();
+
+  // Fetch all products
+  const response: any = await sheetsClient.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
     range: "products!A2:M",
   });
@@ -733,10 +739,47 @@ export const getProductsByCategoryFromDB = async (category: string): Promise<any
       });
       return product;
     })
-.filter((p: Record<string, string>) =>
+    .filter((p: Record<string, string>) =>
       p.is_active === "1" &&
-      p.category?.trim().toLowerCase() === category.toLowerCase()
+      p.category?.trim().toLowerCase() === category.trim().toLowerCase()
     );
 
-  return products;
+  let likedProductIds = new Set<string>();
+  let cartProductIds = new Set<string>();
+
+  if (user && user.id) {
+    // Fetch liked products
+    const likedRes = await sheetsClient.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID,
+      range: "liked_products!A2:C",
+    });
+
+    likedProductIds = new Set(
+      (likedRes.data.values || [])
+        .filter(([, uid]) => parseInt(uid?.trim()) === user.id)
+        .map(([, , pid]) => pid?.trim())
+    );
+
+    // Fetch cart products
+    const cartRes = await sheetsClient.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID,
+      range: "cart_products!A2:D",
+    });
+
+    cartProductIds = new Set(
+      (cartRes.data.values || [])
+        .filter(([, uid]) => parseInt(uid?.trim()) === user.id)
+        .map(([, , pid]) => pid?.trim())
+    );
+  }
+
+  // Attach flags and return
+  return products.map((product:any) => {
+    const productId = product.id.trim();
+    return {
+      ...product,
+      is_product_liked: likedProductIds.has(productId),
+      is_product_in_cart: cartProductIds.has(productId),
+    };
+  });
 };
