@@ -235,9 +235,10 @@ export const getLikedProductsByUser = async (
     spreadsheetId: SPREADSHEET_ID,
     range: "cart_products!A2:D",
   });
-  const cart = (cartRes.data.values || []).filter(
-    ([, uId]) => parseInt(uId.trim()) == userId
-  );
+ const cart = (cartRes.data.values || []).filter(
+  ([, uId]) => uId && parseInt(uId.trim()) == userId
+);
+
   const cartProductIds = new Set(
     cart.map(([_, __, productId]) => parseInt(productId))
   );
@@ -344,9 +345,10 @@ export const getCartByUser = async (userId: number): Promise<any[]> => {
     range: "cart_products!A2:D",
   });
 
-  const cart = (cartRes.data.values || []).filter(
-    ([, uId]) => parseInt(uId.trim()) == userId
-  );
+ const cart = (cartRes.data.values || []).filter(
+  ([, uId]) => uId && parseInt(uId.trim()) == userId
+);
+
   const cartProductIds = new Set(
     cart.map(([_, __, productId]) => parseInt(productId))
   );
@@ -357,8 +359,9 @@ export const getCartByUser = async (userId: number): Promise<any[]> => {
   });
 
   const liked = (likesRes.data.values || []).filter(
-    ([, uId]) => parseInt(uId.trim()) == userId
-  );
+  ([, uId]) => uId && parseInt(uId.trim()) == userId
+);
+
   const likedProductIds = new Set(
     liked.map(([_, __, productId]) => parseInt(productId))
   );
@@ -592,7 +595,7 @@ export const getProductById = async (id: number): Promise<any | null> => {
   return product;
 };
 
-export const getAllProductsWithFlags = async (user: { id: number }) => {
+export const getAllProductsWithFlags = async (user: number) => {
   const sheetsClient = await getSheetsClient();
 
   // Fetch products
@@ -629,7 +632,7 @@ export const getAllProductsWithFlags = async (user: { id: number }) => {
 
     likedProductIds = new Set(
       (likedRes.data.values || [])
-        .filter(([, uid]) => parseInt(uid?.trim()) === user.id)
+        .filter(([, uid]) => parseInt(uid?.trim()) === user)
         .map(([, __, pid]) => pid?.trim())
     );
 
@@ -641,7 +644,7 @@ export const getAllProductsWithFlags = async (user: { id: number }) => {
 
     cartProductIds = new Set(
       (cartRes.data.values || [])
-        .filter(([, uid]) => parseInt(uid?.trim()) === user.id)
+        .filter(([, uid]) => parseInt(uid?.trim()) === user)
         .map(([, __, pid]) => pid?.trim())
     );
   }
@@ -713,7 +716,7 @@ export const getUniqueProductCategoriesFromDB = async (): Promise<
 
 export const getProductsByCategoryWithFlags = async (
   category: string,
-  user: { id: number }
+  user: number
 ): Promise<any[]> => {
   const sheetsClient = await getSheetsClient();
 
@@ -747,7 +750,7 @@ export const getProductsByCategoryWithFlags = async (
   let likedProductIds = new Set<string>();
   let cartProductIds = new Set<string>();
 
-  if (user && user.id) {
+  if (user) {
     // Fetch liked products
     const likedRes = await sheetsClient.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
@@ -756,7 +759,7 @@ export const getProductsByCategoryWithFlags = async (
 
     likedProductIds = new Set(
       (likedRes.data.values || [])
-        .filter(([, uid]) => parseInt(uid?.trim()) === user.id)
+        .filter(([, uid]) => parseInt(uid?.trim()) === user)
         .map(([, , pid]) => pid?.trim())
     );
 
@@ -768,7 +771,7 @@ export const getProductsByCategoryWithFlags = async (
 
     cartProductIds = new Set(
       (cartRes.data.values || [])
-        .filter(([, uid]) => parseInt(uid?.trim()) === user.id)
+        .filter(([, uid]) => parseInt(uid?.trim()) === user)
         .map(([, , pid]) => pid?.trim())
     );
   }

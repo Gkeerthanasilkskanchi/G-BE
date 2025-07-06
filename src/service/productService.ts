@@ -308,9 +308,13 @@ export const getAllCategories = async (req: Request, res: Response, next: NextFu
 
 export const getAllCategoriesProducts = async (req: Request, res: Response): Promise<void> => {
   try {
-    console.log(req.params)
+
    const { id , email }:any = req.params;
-    const userId: any =await getUserIdByEmail(email);
+   let userId: any = null;
+   if(email != 'null'){
+      userId =await getUserIdByEmail(email);
+   }
+   
 
     if (!id) {
       res.status(400).json({ message: "Category is required" });
